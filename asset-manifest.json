@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/we-are-1/static/css/main.1b7b764a.css",
+    "main.js": "/we-are-1/static/js/main.918bb876.js",
+    "static/js/787.d684362c.chunk.js": "/we-are-1/static/js/787.d684362c.chunk.js",
+    "static/media/Helvetica Neu Bold.ttf": "/we-are-1/static/media/Helvetica Neu Bold.61acdee6f288cddccf23.ttf",
+    "static/media/logo.svg": "/we-are-1/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/we-are-1/index.html",
+    "main.1b7b764a.css.map": "/we-are-1/static/css/main.1b7b764a.css.map",
+    "main.918bb876.js.map": "/we-are-1/static/js/main.918bb876.js.map",
+    "787.d684362c.chunk.js.map": "/we-are-1/static/js/787.d684362c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.1b7b764a.css",
+    "static/js/main.918bb876.js"
+  ]
+}
