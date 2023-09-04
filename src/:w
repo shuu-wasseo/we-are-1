@@ -1,0 +1,253 @@
+import { useState, useEffect } from 'react'
+
+export default function Gravity({ gravityType, group, date }) {
+  const [gravityName, setGravityName] = useState("")
+  const [newUnit, setNewUnit] = useState("")
+  const [allocatingUnits, setAllocatingUnits] = useState([])
+  const [occupiedMembers, setOccupiedMembers] = useState([])
+  const [leftMembers, setLeftMembers] = useState([])
+  const [dragging, setDragging] = useState("")
+
+  const [newOption, setNewOption] = useState("")
+  const [options, setOptions] = useState([])
+
+  useEffect(() => {
+    let members = Object.keys(group.members).filter((m) => {
+      for (let s in occupiedMembers) {
+        if (occupiedMembers[s].includes(group.members[m].name)) {
+          return false
+        }
+      }
+      return true
+    })
+    setLeftMembers(
+      members.map((m) => {
+        return group.members[m].name
+      })
+    )
+
+    let requiredLength = allocatingUnits.length ? Math.ceil(Object.keys(group.members).length/allocatingUnits.length) : 0
+    if (requiredLength > occupiedMembers.length) {
+      setOccupiedMembers(
+        occupiedMembers.concat(
+          [...Array(requiredLength - occupiedMembers.length).keys()].map((s) => {
+            return []
+          })
+        )
+      )
+    } else if (requiredLength < occupiedMembers.length) {
+      setOccupiedMembers(occupiedMembers.slice(0, requiredLength))
+    }
+
+  }, [occupiedMembers, allocatingUnits, group])
+  
+  function gridStyle(number) {
+    if (!number) {
+      number = allocatingUnits.length
+    }
+    return {
+      display: "grid", 
+      gridAutoFlow: "row",
+      gridTemplateColumns: "repeat(" + (number) + ", 1fr)",
+      margin: 10
+    }
+  }
+
+  function drop(e) {
+    console.log(e)
+    try {
+      e.preventDefault()
+    } catch {}
+    try {
+      let s = ""
+      for (let c in e.classList) {
+        if (e.classList[c].startsWith("slot-")) {
+          s = Number(e.classList[c].slice(5))
+          break
+        }
+      }
+      if (s === "") {
+        throw Error()
+      }
+      let nOccupiedMembers = occupiedMembers
+      if (nOccupiedMembers[s].length < allocatingUnits.length) {
+        nOccupiedMembers[s].push(dragging)
+      }
+      setOccupiedMembers(nOccupiedMembers)
+    } catch { 
+      try {
+        drop(e.target)
+      } catch {
+        drop(e.target.parentElement)
+      }
+    }
+  }
+
+  function configuration(gravityType) {
+    switch (gravityType) {
+      case "grand (batches)":
+        return <div className="grand-gravity-batches">
+          <div className="member-bank grand-gravity-batches-child" style={gridStyle()}>
+            {
+              leftMembers.map((m) => {
+                return <div draggable onDragStart={e => setDragging(m)}>{m}</div>
+              })
+            }
+          </div>
+          <div className="grand-gravity-batches-child" style={gridStyle(allocatingUnits.length + 1)}>
+            {
+              allocatingUnits.map((m) => {
+                return <div>{m}</div>
+              })
+            }
+            <div>
+              <input name="newUnit" onChange={e => setNewUnit(e.target.value)}></input>
+              <button onClick={(e) => {
+                e.preventDefault()
+                if (newUnit) {
+                  setAllocatingUnits(allocatingUnits.concat([newUnit]))
+                }
+              }}>add unit</button>
+            </div>
+          </div>
+          <div>
+            {
+              [...Array(occupiedMembers.length).keys()].map((s) => {
+                return <div 
+                  className={`member-slot slot-${s}`} 
+                  style={gridStyle(allocatingUnits.length + 1)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => drop(e)}
+                >
+                  <div>round {s+1}:</div>
+                  {
+                    occupiedMembers[s].map((m) => {
+                      return <div>{m}</div>
+                    })
+                  }
+                </div>
+              })
+            }
+          </div>
+        </div>
+
+      case "grand (pool)":
+        return (
+          <div className="grand-gravity-batches-child" style={gridStyle()}>
+            {
+              allocatingUnits.map((m) => {
+                return <div>{m}</div>
+              })
+            }
+            <div>
+              <input name="newUnit" onChange={e => setNewUnit(e.target.value)}></input>
+              <button onClick={(e) => {
+                e.preventDefault()
+                if (newUnit) {
+                  setAllocatingUnits(allocatingUnits.concat([newUnit]))
+                }
+              }}>add unit</button>
+            </div>
+          </div>
+        )
+
+      default:
+        return (
+          <div style={gridStyle(options.length > 4 ? 4 : options.length)}>
+            {
+              options.map((m) => {
+                return <div>{m}</div>
+              })
+            }
+            <div>
+              <input name="newUnit" onChange={e => setNewOption(e.target.value)}></input>
+              <button onClick={(e) => {
+                e.preventDefault()
+                if (newOption) {
+                  setOptions(options.concat([newOption]))
+                }
+              }}>add song</button>
+            </div>
+          </div>
+        )
+    }
+  }
+
+  function submitGravity(gravityType) {
+    let addGravity = {
+      name: gravityName,
+      number: Object.keys(group.gravities).length + 1, 
+      type: type,
+      date: date,
+      rounds: []
+    }
+    switch (gravityType) {
+      case "grand (batches)":
+        let rounds = occupiedMembers
+        addGravity.rounds = rounds.map((r) => {
+          while (r.length < allocatingUnits) {
+            r.push(null)
+          }
+          let permutated = permutation(r).map((p) => {
+            return [...Array(p).keys()].map((c) => {
+              return p[c] ? [p[c], allocatingUnits[c]] : ""
+            }).join(", ")
+          })
+          return {
+	          "number": count
+	          "options": permutated,
+	          "winner": permutated[Math.floor(Math.random() * permutated.length)]
+          }
+        })
+      case "grand (pool)":
+        let memberPool = Object.keys(group.members)
+         
+    }
+  }
+
+  return (
+    <div>
+      {configuration(gravityType)}
+      <button onClick={() => submitGravity(gravityType)}>start!</button>
+    </div>
+  )
+}
+
+function permutation(inputArr) {
+  let result = [];
+
+  const permute = (arr, m = []) => {
+    if (arr.length === 0) {
+      result.push(m)
+    } else {
+      for (let i = 0; i < arr.length; i++) {
+        let curr = arr.slice();
+        let next = curr.splice(i, 1);
+        permute(curr.slice(), m.concat(next))
+     }
+   }
+ }
+
+ permute(inputArr)
+
+ return result;
+}
+
+function combination(array, n) {
+  let result = []
+
+  if (n === 1) {
+    for (const a of array) {
+      result.push([a]);
+    }
+  }
+
+  for (let i = 0; i <= array.length - n; i++) {
+    for (const c of combination(array.slice(i + 1), n - 1)) {
+      result.push([array[i], ...c])
+    }
+  }
+
+  console.log(array, n, result)
+  return result
+}
